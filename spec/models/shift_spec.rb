@@ -41,7 +41,7 @@ RSpec.describe Shift do
       end_1 = "3-1-2018 15:00 -0500".to_datetime
       shift_1 = Shift.new(start_time: start_1,
                           end_time: end_1)
-      expected = 'Wed 3rd, 10:30 - 03:00'
+      expected = 'Wed 3rd, 10:30 AM - 03:00 PM'
 
       expect(shift_1.to_s).to eq(expected)
     end

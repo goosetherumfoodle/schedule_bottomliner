@@ -14,6 +14,6 @@ class Shift
   end
 
   def to_s
-    "#{start_time.strftime('%a')} #{start_time.day.ordinalize}, #{start_time.strftime('%I:%M')} - #{end_time.strftime('%I:%M')}"
+    "#{start_time.strftime('%a')} #{start_time.day.ordinalize}, #{start_time.strftime('%I:%M %p')} - #{end_time.strftime('%I:%M %p')}"
   end
 end
