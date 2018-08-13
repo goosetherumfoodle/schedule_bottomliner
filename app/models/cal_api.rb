@@ -8,8 +8,6 @@ require 'fileutils'
 class CalApi
   OOB_URI = 'urn:ietf:wg:oauth:2.0:oob'.freeze
   APPLICATION_NAME = 'Google Calendar API Ruby Quickstart'.freeze
-  CREDENTIALS_PATH = 'credentials.json'.freeze
-  TOKEN_PATH = 'token.yaml'.freeze
   SCOPE = Google::Apis::CalendarV3::AUTH_CALENDAR_READONLY
   STAFFING_CAL_ID = ENV['STAFFING_CAL_ID']
 
@@ -39,7 +37,7 @@ class CalApi
     shifts.map do |event|
       start = event.start.date || event.start.date_time
       Shift.new(start_time: event.start.date_time,
-                 end_time: event.end.date_time)
+                end_time: event.end.date_time)
     end
   end
 
@@ -53,15 +51,19 @@ class CalApi
   #
   # @return [Google::Auth::UserRefreshCredentials] OAuth2 credentials
   def authorize
-    client_id = Google::Auth::ClientId.from_file(CREDENTIALS_PATH)
-    token_store = Google::Auth::Stores::FileTokenStore.new(file: TOKEN_PATH)
+    Aws.config.update({region: ENV['AWS_REGION'], credentials: Aws::Credentials.new(ENV['AWS_ID'], ENV['AWS_SECRET'])})
+    s3 = Aws::S3::Resource.new
+    s3.bucket(ENV['AWS_BUCKET_NAME']).object(ENV['GOOGLE_CREDS_KEY']).get(response_target: './creds')
+    s3.bucket(ENV['AWS_BUCKET_NAME']).object(ENV['GOOGLE_TOKEN_KEY']).get(response_target: './token')
+    client_id = Google::Auth::ClientId.from_file('./creds')
+    token_store = Google::Auth::Stores::FileTokenStore.new(file: './token')
     authorizer = Google::Auth::UserAuthorizer.new(client_id, SCOPE, token_store)
     user_id = 'default'
     credentials = authorizer.get_credentials(user_id)
     if credentials.nil?
       url = authorizer.get_authorization_url(base_url: OOB_URI)
       puts 'Open the following URL in the browser and enter the ' \
-           "resulting code after authorization:\n" + url
+        "resulting code after authorization:\n" + url
       code = gets
       credentials = authorizer.get_and_store_credentials_from_code(
         user_id: user_id, code: code, base_url: OOB_URI

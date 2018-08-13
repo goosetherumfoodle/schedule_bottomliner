@@ -8,6 +8,7 @@ gem 'pg', '>= 0.18', '< 2.0'
 gem 'puma', '~> 3.11'
 gem 'google-api-client', '~> 0.8'
 gem 'twilio-ruby', '~> 5.12.1'
+gem 'aws-sdk-s3', '~> 1'
 
 
 # Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
