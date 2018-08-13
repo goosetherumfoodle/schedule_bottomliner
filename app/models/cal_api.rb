@@ -29,11 +29,11 @@ class CalApi
                                    max_results: 10,
                                    single_events: true,
                                    order_by: 'startTime',
-                                   time_min: current_time.iso8601)
+                                   time_min: period.start_time.beginning_of_day.iso8601)
 
     shifts = response.items.select do |event|
-      event.start.date_time >= period.start_time &&
-        event.end.date_time <= period.end_time
+      event.end.date_time >= period.start_time &&
+        event.start.date_time <= period.end_time
     end
 
     shifts.map do |event|

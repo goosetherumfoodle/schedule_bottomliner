@@ -8,10 +8,11 @@ module Gap
     end
 
     def call(look_in:, calendar_shifts:)
+      calendar_shifts = shifts_within_period(look_in, calendar_shifts)
       return [look_in] if calendar_shifts.empty?
 
       init = {prev_shift: open_bookend_shift(calendar_shifts.first),
-             gaps: []}
+              gaps: []}
       append_close_bookend(calendar_shifts).reduce(init) do |accum, taken_shift|
         if minute_diff(accum[:prev_shift].end_time, taken_shift.start_time) > ACCEPTABLE_GAP_MINUTES
           gap = gap_shift(accum[:prev_shift].end_time, taken_shift.start_time)
@@ -27,6 +28,14 @@ module Gap
 
     private
     attr_reader :calendar_api
+
+    def shifts_within_period(period, shifts)
+      shifts.select do |shift|
+        shift.end_time >= period.start_time &&
+          shift.start_time <= period.end_time
+      end
+    end
+
 
     def gap_shift(first_end, second_start)
       Shift.new(start_time: first_end, end_time: second_start)
