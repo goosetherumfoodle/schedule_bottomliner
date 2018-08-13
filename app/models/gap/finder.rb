@@ -2,9 +2,10 @@ module Gap
   class Finder
     ACCEPTABLE_GAP_MINUTES = 40
 
-    def initialize(current_time:)
+    def initialize(current_time:, schedule:)
       # todo: remove this?
       @current_time = current_time
+      @schedule = schedule
     end
 
     def call(look_in:, calendar_shifts:)
@@ -27,7 +28,7 @@ module Gap
     end
 
     private
-    attr_reader :calendar_api
+    attr_reader :calendar_api, :schedule
 
     def shifts_within_period(period, shifts)
       shifts.select do |shift|
@@ -55,8 +56,8 @@ module Gap
 
     def close_bookend_shift(last_taken_shift)
       # todo: extract this dep, isolate schedule knowlege
-      end_hour = Shift.shift_end[:hour]
-      end_minute = Shift.shift_end[:minute]
+      end_hour = schedule_for_day(last_taken_shift).end_time.hour
+      end_minute = schedule_for_day(last_taken_shift).end_time.minute
       bookend_start = last_taken_shift.
         end_time.
         change(hour: end_hour,
@@ -71,8 +72,8 @@ module Gap
 
     def open_bookend_shift(first_taken_shift)
       # todo: extract this dep, isolate schedule knowlege
-      start_hour = Shift.shift_start[:hour]
-      start_minute = Shift.shift_start[:minute]
+      start_hour = schedule_for_day(first_taken_shift).start_time.hour
+      start_minute = schedule_for_day(first_taken_shift).start_time.minute
       bookend_end = first_taken_shift.
         start_time.
         change(hour: start_hour,
@@ -83,6 +84,10 @@ module Gap
 
       Shift.new(start_time: bookend_start,
                 end_time: bookend_end)
+    end
+
+    def schedule_for_day(shift)
+      schedule.full_day_shift_for(shift.start_time)
     end
   end
 end

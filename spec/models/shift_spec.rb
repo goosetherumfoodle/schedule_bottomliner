@@ -1,34 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe Shift do
-  describe '::full_next_day' do
-    context 'before the opening shift time' do
-      it 'gives the shift times for the current day' do
-        current_time = "2-1-2018 08:00 -0500".to_datetime
-        expected_start_time = "2-1-2018 10:30 -0500".to_datetime
-        expected_end_time = "2-1-2018 21:30 -0500".to_datetime
-
-        shift = Shift.next_full_day(current_time)
-
-        expect(shift.start_time).to eq(expected_start_time)
-        expect(shift.end_time).to eq(expected_end_time)
-      end
-    end
-
-    context 'after the opening shift time' do
-      it 'gives the shift times for the next day' do
-        current_time = "2-1-2018 11:00 -0500".to_datetime
-        expected_start_time = "3-1-2018 10:30 -0500".to_datetime
-        expected_end_time = "3-1-2018 21:30 -0500".to_datetime
-
-        shift = Shift.next_full_day(current_time)
-
-        expect(shift.start_time).to eq(expected_start_time)
-        expect(shift.end_time).to eq(expected_end_time)
-      end
-    end
-  end
-
   describe 'equality' do
     context 'with different start and end times' do
       it 'is unequal' do
