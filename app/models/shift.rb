@@ -1,3 +1,5 @@
+require 'active_support/core_ext/integer/inflections'
+
 class Shift
   # todo: take different day shift times into account
   # todo: extract building logic
@@ -19,7 +21,7 @@ class Shift
     SHIFT_END
   end
 
-  def self.full_next_day(current_time = DateTime.now)
+  def self.next_full_day(current_time = DateTime.now)
     if current_days_shifts_started?(current_time)
       build_next_days_full_shifts(current_time)
     else
@@ -76,5 +78,9 @@ class Shift
   def ==(other_shift)
     start_time == other_shift.start_time &&
       end_time == other_shift.end_time
+  end
+
+  def to_s
+    "#{start_time.strftime('%a')} #{start_time.day.ordinalize}, #{start_time.strftime('%I:%M')} - #{end_time.strftime('%I:%M')}"
   end
 end

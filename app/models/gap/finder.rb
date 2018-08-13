@@ -3,10 +3,13 @@ module Gap
     ACCEPTABLE_GAP_MINUTES = 40
 
     def initialize(current_time:)
+      # todo: remove this?
       @current_time = current_time
     end
 
     def call(look_in:, calendar_shifts:)
+      return [look_in] if calendar_shifts.empty?
+
       init = {prev_shift: open_bookend_shift(calendar_shifts.first),
              gaps: []}
       append_close_bookend(calendar_shifts).reduce(init) do |accum, taken_shift|
