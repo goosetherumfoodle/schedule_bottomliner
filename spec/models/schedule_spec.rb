@@ -16,14 +16,15 @@ RSpec.describe Schedule do
               "saturday"=>[["10:30", "16:00"],
                            ["16:00", "19:00"]],
               "sunday"=>[["10:30", "16:00"],
-                         ["16:00", "19:00"]]}
-      tuesday = '14-08-2018 05:00 -0500'.to_datetime
+                         ["16:00", "19:00"]],
+              "timezone" => 'Eastern Time (US & Canada)'}
+      tuesday = '14-08-2018 05:00'.to_datetime
 
       schedule = Schedule.build(hash: hash,
                                 current_time: tuesday)
 
-      expect(schedule.next_full_day).to eq(Shift.new(start_time: "14-08-2018 10:30 -0500".to_datetime,
-                                                     end_time: "14-08-2018 17:00 -0500".to_datetime))
+      expect(schedule.next_full_day).to eq(Shift.new(start_time: "14-08-2018 10:30 -0400".to_datetime,
+                                                     end_time: "14-08-2018 17:00 -0400".to_datetime))
     end
   end
 
@@ -43,14 +44,73 @@ RSpec.describe Schedule do
                 "saturday"=>[["10:30", "16:00"],
                              ["16:00", "19:00"]],
                 "sunday"=>[["10:30", "16:00"],
-                           ["16:00", "19:00"]]}
-        today_monday = '13-08-2018 05:00 -0500'.to_datetime
+                           ["16:00", "19:00"]],
+                "timezone" => 'Eastern Time (US & Canada)'}
+        today_monday = '13-08-2018 05:00'.to_datetime
 
         schedule = Schedule.build(hash: hash,
                                   current_time: today_monday)
 
-        expect(schedule.next_full_day).to eq(Shift.new(start_time: "13-08-2018 10:30 -0500".to_datetime,
-                                                       end_time: "13-08-2018 21:00 -0500".to_datetime))
+        expect(schedule.next_full_day).to eq(Shift.new(start_time: "13-08-2018 10:30 -0400".to_datetime,
+                                                       end_time: "13-08-2018 21:00 -0400".to_datetime))
+      end
+
+      context 'during daylight savings time' do
+        it 'created shift has correct offset for timezone' do
+          timezone = 'Eastern Time (US & Canada)'
+          hash = {"monday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                  "tuesday"=>[["10:30", "16:00"],
+                              ["16:00", "17:00"]],
+                  "wednesday"=>[["10:30", "16:00"],
+                                ["16:00", "21:00"]],
+                  "thursday"=>[["10:30", "16:00"],
+                               ["16:00", "21:00"]],
+                  "friday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                  "saturday"=>[["10:30", "16:00"],
+                               ["16:00", "19:00"]],
+                  "sunday"=>[["10:30", "16:00"],
+                             ["16:00", "19:00"]],
+                  "timezone" => timezone}
+          current_time_dst = '13-08-2018 05:00'.to_datetime
+          expected_offset = '-04:00'
+
+
+          schedule = Schedule.build(hash: hash,
+                                    current_time: current_time_dst)
+
+          expect(schedule.next_full_day.start_time.formatted_offset).to eq(expected_offset)
+        end
+      end
+
+      context 'NOT during daylight savings time' do
+        it 'created shift has correct offset for timezone' do
+          timezone = 'Eastern Time (US & Canada)'
+          hash = {"monday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                  "tuesday"=>[["10:30", "16:00"],
+                              ["16:00", "17:00"]],
+                  "wednesday"=>[["10:30", "16:00"],
+                                ["16:00", "21:00"]],
+                  "thursday"=>[["10:30", "16:00"],
+                               ["16:00", "21:00"]],
+                  "friday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                  "saturday"=>[["10:30", "16:00"],
+                               ["16:00", "19:00"]],
+                  "sunday"=>[["10:30", "16:00"],
+                             ["16:00", "19:00"]],
+                  "timezone" => timezone}
+          current_time_no_dst = '01-01-2018 05:00'.to_datetime
+          expected_offset = '-05:00'
+
+
+          schedule = Schedule.build(hash: hash,
+                                    current_time: current_time_no_dst)
+
+          expect(schedule.next_full_day.start_time.formatted_offset).to eq(expected_offset)
+        end
       end
     end
 
@@ -70,14 +130,15 @@ RSpec.describe Schedule do
                 "saturday"=>[["10:30", "16:00"],
                              ["16:00", "19:00"]],
                 "sunday"=>[["10:30", "16:00"],
-                           ["16:00", "19:00"]]}
-        current_time = '17-08-2018 11:00 -0500'.to_datetime
+                           ["16:00", "19:00"]],
+                "timezone" => 'Eastern Time (US & Canada)'}
+        current_time = '17-08-2018 11:00'.to_datetime
 
         schedule = Schedule.build(hash: hash,
                                   current_time: current_time)
 
-        expect(schedule.next_full_day).to eq(Shift.new(start_time: "18-08-2018 10:30 -0500".to_datetime,
-                                                       end_time: "18-08-2018 19:00 -0500".to_datetime))
+        expect(schedule.next_full_day).to eq(Shift.new(start_time: "18-08-2018 10:30 -0400".to_datetime,
+                                                       end_time: "18-08-2018 19:00 -0400".to_datetime))
       end
     end
   end

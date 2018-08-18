@@ -19,7 +19,8 @@ RSpec.describe Gap::NextShift do
                        "saturday"=>[["10:30", "16:00"],
                                     ["16:00", "19:00"]],
                        "sunday"=>[["10:30", "16:00"],
-                                  ["16:00", "19:00"]]}
+                                  ["16:00", "19:00"]],
+                       "timezone" => 'Eastern Time (US & Canada)'}
 
       current_time = '5-10-2018 18:00 -0500'.to_datetime
 

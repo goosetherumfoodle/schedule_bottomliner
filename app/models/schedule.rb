@@ -8,7 +8,9 @@ class Schedule
                  fridays:,
                  saturdays:,
                  sundays:,
-                 current_time:)
+                 timezone:,
+                 current_time:
+                )
     @current_time = current_time
     @monday_times = mondays
     @tuesday_times = tuesdays
@@ -17,6 +19,7 @@ class Schedule
     @friday_times = fridays
     @saturday_times = saturdays
     @sunday_times = sundays
+    @timezone = timezone
   end
 
   def self.build(hash:, current_time:)
@@ -27,6 +30,7 @@ class Schedule
         fridays: hash['friday'],
         saturdays: hash['saturday'],
         sundays: hash['sunday'],
+        timezone: hash['timezone'],
         current_time: current_time
        )
   end
@@ -41,9 +45,11 @@ class Schedule
 
   def full_day_shift_for(day)
     Shift.new(start_time: day.change(hour: hours(start_time(first_shift(times_for(day)))),
-                                     min: minutes(start_time(first_shift(times_for(day))))),
+                                     min: minutes(start_time(first_shift(times_for(day)))),
+                                     offset: offset),
               end_time: day.change(hour: hours(end_time(last_shift(times_for(day)))),
-                                   min: minutes(end_time(last_shift(times_for(day))))))
+                                   min: minutes(end_time(last_shift(times_for(day)))),
+                                   offset: offset))
   end
 
   private
@@ -54,7 +60,12 @@ class Schedule
     :thursday_times,
     :friday_times,
     :saturday_times,
-    :sunday_times
+    :sunday_times,
+    :timezone
+
+  def offset
+    current_time.in_time_zone(timezone).formatted_offset
+  end
 
   def tomorrow
     current_time.advance(days: 1)

@@ -28,3 +28,5 @@ saturday:
 sunday:
         - ["10:30", "16:00"]
         - ["16:00", "19:00"]
+
+timezone: "Eastern Time (US & Canada)"
