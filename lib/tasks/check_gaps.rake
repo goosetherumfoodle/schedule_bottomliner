@@ -9,7 +9,22 @@ namespace :gaps do
       gap_shifts = Gap::NextShift.new(schedule: schedule).call.map(&:to_s)
       Rails.logger.info "shift gaps found: #{gap_shifts}"
       if gap_shifts.any?
-        Notifier.new.gap_shifts(gap_shifts)
+        Notifier.new(Contact.pluck(:number)).gap_shifts(gap_shifts)
+      end
+    end
+  end
+
+  desc "TEST ACCOUNTS: Check and alert if next-day gaps are found"
+  task test_next_shift: :environment do
+    Rails.logger.info 'gaps:next_shift task started'
+    File.open('./schedule.yml') do |schedule_file|
+      schedule_hash = YAML.load(schedule_file.read)
+      time = DateTime.now
+      schedule = Schedule.build(hash: schedule_hash, current_time: time)
+      gap_shifts = Gap::NextShift.new(schedule: schedule).call.map(&:to_s)
+      Rails.logger.info "shift gaps found: #{gap_shifts}"
+      if gap_shifts.any?
+        Notifier.new(Contact.testers.pluck(:number)).gap_shifts(gap_shifts)
       end
     end
   end

@@ -1,0 +1,5 @@
+class AddTesterToContact < ActiveRecord::Migration[5.2]
+  def change
+    add_column :contacts, :tester, :boolean, default: false
+  end
+end
