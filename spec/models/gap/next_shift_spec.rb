@@ -22,20 +22,20 @@ RSpec.describe Gap::NextShift do
                                   ["16:00", "19:00"]],
                        "timezone" => 'Eastern Time (US & Canada)'}
 
-      current_time = '5-10-2018 18:00 -0500'.to_datetime
+      current_time = '5-10-2018 18:00 -0400'.to_datetime
 
       schedule = Schedule.build(hash: schedule_hash,
                                 current_time: current_time)
 
-      gap_shift_1 = Shift.new(start_time: '6-10-2018 12:00 -0500'.to_datetime,
-                              end_time: '6-10-2018 16:00 -0500'.to_datetime)
-      gap_shift_2 = Shift.new(start_time: '6-10-2018 18:00 -0500'.to_datetime,
-                              end_time: '6-10-2018 19:00 -0500'.to_datetime)
+      gap_shift_1 = Shift.new(start_time: '6-10-2018 12:00 -0400'.to_datetime,
+                              end_time: '6-10-2018 16:00 -0400'.to_datetime)
+      gap_shift_2 = Shift.new(start_time: '6-10-2018 18:00 -0400'.to_datetime,
+                              end_time: '6-10-2018 19:00 -0400'.to_datetime)
 
-      cal_open_shift = Shift.new(start_time: '6-10-2018 10:30 -0500'.to_datetime,
-                                 end_time: '6-10-2018 12:00 -0500'.to_datetime)
-      cal_close_shift = Shift.new(start_time: '6-10-2018 16:00 -0500'.to_datetime,
-                                  end_time: '6-10-2018 18:00 -0500'.to_datetime)
+      cal_open_shift = Shift.new(start_time: '6-10-2018 10:30 -0400'.to_datetime,
+                                 end_time: '6-10-2018 12:00 -0400'.to_datetime)
+      cal_close_shift = Shift.new(start_time: '6-10-2018 16:00 -0400'.to_datetime,
+                                  end_time: '6-10-2018 18:00 -0400'.to_datetime)
 
       cal_api = double(:cal_api, shifts_for_period: [cal_open_shift,
                                                      cal_close_shift])

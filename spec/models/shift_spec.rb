@@ -48,6 +48,22 @@ RSpec.describe Shift do
   end
 
   describe '#contains?' do
+    context 'with a shift within a exclusive buffer' do
+      it 'is falsey' do
+        exclusive_minutes = 10
+        start_1 = "3-1-2018 10:30 -0500".to_datetime
+        end_1 = "3-1-2018 15:00 -0500".to_datetime
+        shift_1 = Shift.new(start_time: start_1,
+                            end_time: end_1)
+        query_time = "3-1-2018 14:55 -0500".to_datetime
+
+        results = shift_1.contains?(query_time,
+                                    exclusive_buffer_mins: exclusive_minutes)
+
+        expect(results).to be_falsey
+      end
+    end
+
     context 'with a time it contains' do
       it 'is truthy' do
         start_1 = "3-1-2018 10:30 -0500".to_datetime

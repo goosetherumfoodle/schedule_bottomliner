@@ -5,7 +5,7 @@ class Notifier
 
   def gap_shifts(shifts)
     TwilioAPI.new(numbers)
-      .text_all("Upcoming bookstore shift #{'gap'.pluralize(shifts.count)}:\n#{shifts.join("\n")}")
+      .text_all("#{'Gap'.pluralize(shifts.count)} tomorrow:\n#{shifts.join("\n")}")
   end
 
   private

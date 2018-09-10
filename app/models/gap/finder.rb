@@ -4,11 +4,20 @@ module Gap
 
     def initialize(current_time:, schedule:)
       # todo: remove this?
-      @current_time = current_time
       @schedule = schedule
+      @splitter = Splitter.new
     end
 
     def call(look_in:, calendar_shifts:)
+      gaps = raw_gaps(look_in: look_in, calendar_shifts: calendar_shifts)
+      splitter.call(schedule_shifts: schedule_for_next_day,
+                    gaps: gaps)
+    end
+
+    private
+    attr_reader :calendar_api, :schedule, :splitter
+
+    def raw_gaps(look_in:, calendar_shifts:)
       calendar_shifts = shifts_within_period(look_in, calendar_shifts)
       return [look_in] if calendar_shifts.empty?
 
@@ -26,9 +35,6 @@ module Gap
         end
       end[:gaps]
     end
-
-    private
-    attr_reader :calendar_api, :schedule
 
     def shifts_within_period(period, shifts)
       shifts.select do |shift|
@@ -56,14 +62,14 @@ module Gap
 
     def close_bookend_shift(last_taken_shift)
       # todo: extract this dep, isolate schedule knowlege
-      end_hour = schedule_for_day(last_taken_shift).end_time.hour
-      end_minute = schedule_for_day(last_taken_shift).end_time.minute
+      end_hour = full_day_for(last_taken_shift).end_time.hour
+      end_minute = full_day_for(last_taken_shift).end_time.minute
       bookend_start = last_taken_shift.
-        end_time.
-        change(hour: end_hour,
-               min: end_minute)
+                        end_time.
+                        change(hour: end_hour,
+                               min: end_minute)
       bookend_end = bookend_start.
-        advance(hours: 1)
+                      advance(hours: 1)
 
       Shift.new(start_time: bookend_start,
                 end_time: bookend_end)
@@ -72,22 +78,27 @@ module Gap
 
     def open_bookend_shift(first_taken_shift)
       # todo: extract this dep, isolate schedule knowlege
-      start_hour = schedule_for_day(first_taken_shift).start_time.hour
-      start_minute = schedule_for_day(first_taken_shift).start_time.minute
+      start_hour = full_day_for(first_taken_shift).start_time.hour
+      start_minute = full_day_for(first_taken_shift).start_time.minute
       bookend_end = first_taken_shift.
-        start_time.
-        change(hour: start_hour,
-               min: start_minute).
-        advance(minutes: -1)
+                      start_time.
+                      change(hour: start_hour,
+                             min: start_minute).
+                      advance(minutes: -1)
       bookend_start = bookend_end.
-        advance(hours: -1)
+                        advance(hours: -1)
 
       Shift.new(start_time: bookend_start,
                 end_time: bookend_end)
     end
 
-    def schedule_for_day(shift)
-      schedule.full_day_shift_for(shift.start_time)
+    def schedule_for_next_day
+      @next_day_shifts ||= schedule.next_shifts
+    end
+
+    def full_day_for(day)
+      Shift.new(start_time: schedule_for_next_day.first.start_time,
+                end_time: schedule_for_next_day.last.end_time)
     end
   end
 end

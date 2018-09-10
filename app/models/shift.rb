@@ -17,9 +17,13 @@ class Shift
     "#{start_time.strftime('%a')} #{start_time.day.ordinalize}, #{start_time.strftime('%I:%M %p')} - #{end_time.strftime('%I:%M %p')}"
   end
 
-  def contains?(time)
-    time >= start_time &&
-      time <= end_time
+  def contains?(time, exclusive_buffer_mins: nil)
+    if exclusive_buffer_mins
+      time >= start_time.advance(minutes: exclusive_buffer_mins) &&
+        time <= end_time.advance(minutes: -exclusive_buffer_mins)
+    else
+      time >= start_time && time <= end_time
+    end
   end
 
   def split(time)
