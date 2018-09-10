@@ -1,7 +1,67 @@
 require 'rails_helper'
 
 RSpec.describe Schedule do
-  describe '#full_day_for' do
+  describe '#next_shifts' do
+    context 'on tuesday morning' do
+      it 'returns the shifts for tuesday' do
+        hash = {"monday"=>[["10:30", "16:00"],
+                           ["16:00", "21:00"]],
+                "tuesday"=>[["10:30", "16:00"],
+                            ["16:00", "17:00"]],
+                "wednesday"=>[["10:30", "16:00"],
+                              ["16:00", "21:00"]],
+                "thursday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                "friday"=>[["10:30", "16:00"],
+                           ["16:00", "21:00"]],
+                "saturday"=>[["10:30", "16:00"],
+                             ["16:00", "19:00"]],
+                "sunday"=>[["10:30", "16:00"],
+                           ["16:00", "19:00"]],
+                "timezone" => 'Eastern Time (US & Canada)'}
+        tuesday_morning = '14-08-2018 05:00'.to_datetime
+
+        schedule = Schedule.build(hash: hash,
+                                  current_time: tuesday_morning)
+
+        expect(schedule.next_shifts).to match_array([Shift.new(start_time: "14-08-2018 10:30 -0400".to_datetime,
+                                                               end_time: "14-08-2018 16:00 -0400".to_datetime),
+                                                     Shift.new(start_time: "14-08-2018 16:00 -0400".to_datetime,
+                                                               end_time: "14-08-2018 17:00 -0400".to_datetime)])
+      end
+    end
+
+    context 'on sunday afternoon' do
+      it 'returns the shifts for monday' do
+        hash = {"monday"=>[["10:30", "16:00"],
+                           ["16:00", "21:00"]],
+                "tuesday"=>[["10:30", "16:00"],
+                            ["16:00", "17:00"]],
+                "wednesday"=>[["10:30", "16:00"],
+                              ["16:00", "21:00"]],
+                "thursday"=>[["10:30", "16:00"],
+                             ["16:00", "21:00"]],
+                "friday"=>[["10:30", "16:00"],
+                           ["16:00", "21:00"]],
+                "saturday"=>[["10:30", "16:00"],
+                             ["16:00", "19:00"]],
+                "sunday"=>[["10:30", "16:00"],
+                           ["16:00", "19:00"]],
+                "timezone" => 'Eastern Time (US & Canada)'}
+        sunday_afternoon = '19-08-2018 15:00'.to_datetime
+
+        schedule = Schedule.build(hash: hash,
+                                  current_time: sunday_afternoon)
+
+        expect(schedule.next_shifts).to match_array([Shift.new(start_time: "20-08-2018 10:30 -0400".to_datetime,
+                                                               end_time: "20-08-2018 16:00 -0400".to_datetime),
+                                                     Shift.new(start_time: "20-08-2018 16:00 -0400".to_datetime,
+                                                               end_time: "20-08-2018 21:00 -0400".to_datetime)])
+      end
+    end
+  end
+
+  describe '#next_full_day' do
     it 'returns full-day shift for any day' do
       hash = {"monday"=>[["10:30", "16:00"],
                          ["16:00", "21:00"]],
@@ -26,9 +86,7 @@ RSpec.describe Schedule do
       expect(schedule.next_full_day).to eq(Shift.new(start_time: "14-08-2018 10:30 -0400".to_datetime,
                                                      end_time: "14-08-2018 17:00 -0400".to_datetime))
     end
-  end
 
-  describe '#next_full_day' do
     context 'on a monday, before first shift start' do
       it 'creates one shift representing today\'s (unstarted) full day of shifts' do
         hash = {"monday"=>[["10:30", "16:00"],

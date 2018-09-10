@@ -35,6 +35,14 @@ class Schedule
        )
   end
 
+  def next_shifts
+    if already_started?
+      tomorrow_shifts
+    else
+      current_day_shifts
+    end
+  end
+
   def next_full_day
     if already_started?
       tomorrow_full_day
@@ -54,14 +62,14 @@ class Schedule
 
   private
   attr_reader :current_time,
-    :monday_times,
-    :tuesday_times,
-    :wednesday_times,
-    :thursday_times,
-    :friday_times,
-    :saturday_times,
-    :sunday_times,
-    :timezone
+              :monday_times,
+              :tuesday_times,
+              :wednesday_times,
+              :thursday_times,
+              :friday_times,
+              :saturday_times,
+              :sunday_times,
+              :timezone
 
   def offset
     current_time.in_time_zone(timezone).formatted_offset
@@ -77,6 +85,14 @@ class Schedule
 
   def tomorrow_full_day
     full_day_shift_for(tomorrow)
+  end
+
+  def tomorrow_shifts
+    shifts_for(tomorrow)
+  end
+
+  def current_day_shifts
+    shifts_for(current_time)
   end
 
   def current_full_day
@@ -128,5 +144,16 @@ class Schedule
 
   def minutes(string)
     string.match(/\A\d{2}:(\d{2})\z/)[1].to_i
+  end
+
+  def shifts_for(day)
+    times_for(day).map do |start_end|
+      Shift.new(start_time: day.change(hour: hours(start_time(start_end)),
+                                       min: minutes(start_time(start_end)),
+                                       offset: offset), # TODO: if this is giving me the current day offset, it should mess up the next day's time (on the day before DST)
+                end_time: day.change(hour: hours(end_time(start_end)),
+                                     min: minutes(end_time(start_end)),
+                                     offset: offset))
+    end
   end
 end
