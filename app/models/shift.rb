@@ -16,4 +16,20 @@ class Shift
   def to_s
     "#{start_time.strftime('%a')} #{start_time.day.ordinalize}, #{start_time.strftime('%I:%M %p')} - #{end_time.strftime('%I:%M %p')}"
   end
+
+  def contains?(time)
+    time >= start_time &&
+      time <= end_time
+  end
+
+  def split(time)
+    return [self] if !self.contains?(time)
+
+    first_shift = self.class.new(start_time: start_time,
+                                 end_time: time)
+    second_shift = self.class.new(start_time: time,
+                                  end_time: end_time)
+
+    [first_shift, second_shift]
+  end
 end
