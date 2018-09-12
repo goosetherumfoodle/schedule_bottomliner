@@ -19,7 +19,7 @@ Bundler.require(*Rails.groups)
 
 module ScheduleNagger
   class Application < Rails::Application
-      config.time_zone = 'UTC'
+    config.time_zone = 'UTC'
 
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 5.2
@@ -33,6 +33,9 @@ module ScheduleNagger
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    config.middleware.use ActionDispatch::Cookies
+    config.middleware.use ActionDispatch::Session::CookieStore, key: '_schedule_bottomliner'
 
     Rails.logger = Logger.new(STDOUT)
     Rails.logger.level = :info

@@ -3,38 +3,98 @@ module Gap
     ACCEPTABLE_GAP_MINUTES = 40
 
     def initialize(current_time:, schedule:)
-      # todo: remove this?
+      # todo: remove current_time?
       @schedule = schedule
+      # TODO: remove splitter, extract other logic
       @splitter = Splitter.new
     end
 
     def call(look_in:, calendar_shifts:)
-      gaps = raw_gaps(look_in: look_in, calendar_shifts: calendar_shifts)
-      splitter.call(schedule_shifts: schedule_for_next_day,
-                    gaps: gaps)
+      schedule_shifts = schedule.shifts_in_period(look_in)
+      gaps_within_period(look_in, calendar_shifts).
+        flat_map { |raw_gap| raw_gap.intersect_each(schedule_shifts) }.
+        compact.
+        select { |shift| shift.total_minutes > 10 }
+    end
+
+    def gaps_within_period(period, shifts)
+      relevent_shifts = shifts.select { |shift| shift.within_inclusive?(period) }
+      opening = opening_gap(period, relevent_shifts)
+      middle = middle_gaps(period, relevent_shifts)
+      closing = closing_gap(period, relevent_shifts)
+
+      opening.concat(middle.concat(closing))
+    end
+
+    def middle_gaps(period, shifts)
+      return [] if shifts.empty?
+
+      first_shift = shifts.first
+      rest_shifts = shifts[1..-1]
+      init = {gaps: [], prev_shift: first_shift}
+      rest_shifts.reduce(init) do |hash, shift|
+        prev_shift = hash[:prev_shift]
+        diff_seconds = shift.start_time.to_i - prev_shift.end_time.to_i
+        pos_diff_seconds = [0, diff_seconds].max
+        diff_minutes = seconds_to_minutes(pos_diff_seconds)
+
+        if diff_minutes > ACCEPTABLE_GAP_MINUTES
+          gap_shift = Shift.new(start_time: prev_shift.end_time, end_time: shift.start_time)
+          {gaps: hash[:gaps].append(gap_shift),
+           prev_shift: shift}
+        else
+          hash.merge({prev_shift: shift})
+        end
+      end[:gaps]
+    end
+
+    def closing_gap(period, shifts)
+      return [] if shifts.empty?
+
+      last_shift = shifts.last
+      diff_seconds = period.end_time.to_i - last_shift.end_time.to_i
+      pos_diff_seconds = [0, diff_seconds].max
+      diff_minutes = seconds_to_minutes(pos_diff_seconds)
+
+      if diff_minutes > ACCEPTABLE_GAP_MINUTES
+        [Shift.new(start_time: period.end_time.advance(minutes: -diff_minutes),
+                   end_time: period.end_time)]
+      else
+        []
+      end
+    end
+
+    def opening_gap(period, shifts)
+      return [] if shifts.empty?
+
+      first_shift = shifts.first
+      diff_seconds = first_shift.start_time.to_i - period.start_time.to_i
+      pos_diff_seconds = [0, diff_seconds].max
+      diff_minutes = seconds_to_minutes(pos_diff_seconds)
+
+      if diff_minutes > ACCEPTABLE_GAP_MINUTES
+        [Shift.new(start_time: period.start_time,
+                   end_time: period.start_time.advance(minutes: diff_minutes))]
+      else
+        []
+      end
     end
 
     private
     attr_reader :calendar_api, :schedule, :splitter
 
-    def raw_gaps(look_in:, calendar_shifts:)
-      calendar_shifts = shifts_within_period(look_in, calendar_shifts)
-      return [look_in] if calendar_shifts.empty?
-
-      init = {prev_shift: open_bookend_shift(calendar_shifts.first),
-              gaps: []}
-      append_close_bookend(calendar_shifts).reduce(init) do |accum, taken_shift|
-        if minute_diff(accum[:prev_shift].end_time, taken_shift.start_time) > ACCEPTABLE_GAP_MINUTES
-          gap = gap_shift(accum[:prev_shift].end_time, taken_shift.start_time)
-          accum[:prev_shift] = taken_shift
-          accum[:gaps] = accum[:gaps].append(gap)
-          accum
-        else
-          accum[:prev_shift] = taken_shift
-          accum
-        end
-      end[:gaps]
+    def seconds_to_minutes(seconds)
+      (seconds / 60).floor
     end
+
+    # def raw_gaps(look_in:, calendar_shifts:)
+    #   schedule_shifts = schedule.shifts_in_period(look_in)
+    #   schedule_shifts.flat_map do |sched_shift|
+    #     sched_day = sched_shift.start_time.to_date
+    #     cal_shifts_on_day = calendar_shifts.select { |cal_shift| cal_shift.start_time.to_date == sched_day }
+    #     gaps_within_period(sched_shift, cal_shifts_on_day)
+    #   end
+    # end
 
     def shifts_within_period(period, shifts)
       shifts.select do |shift|
@@ -42,7 +102,6 @@ module Gap
           shift.start_time <= period.end_time
       end
     end
-
 
     def gap_shift(first_end, second_start)
       Shift.new(start_time: first_end, end_time: second_start)
@@ -53,6 +112,7 @@ module Gap
     end
 
     def minutes_since_midnight(time)
+      # TODO: either use or remove this. Should be unix?
       time.seconds_since_midnight / 60
     end
 
@@ -100,5 +160,14 @@ module Gap
       Shift.new(start_time: schedule_for_next_day.first.start_time,
                 end_time: schedule_for_next_day.last.end_time)
     end
+
+    #     def schedule_for_day(day)
+    #   @next_day_shifts ||= schedule.shifts_in_period(day)
+    # end
+
+    # def full_day_for(day)
+    #   Shift.new(start_time: schedule_for_day(day).first.start_time,
+    #             end_time: schedule_for_day(day).last.end_time)
+    # end
   end
 end

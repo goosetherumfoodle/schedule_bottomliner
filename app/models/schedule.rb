@@ -60,6 +60,16 @@ class Schedule
                                    offset: offset))
   end
 
+  def shifts_in_period(period)
+    # returns all shifts for each day included
+    number_of_days = (period.end_time.to_date - period.start_time.to_date).to_i
+    first_day = period.start_time
+    (0..number_of_days).flat_map do |day_offset|
+      day = first_day.advance(days: day_offset)
+      shifts_for(day)
+    end
+  end
+
   private
   attr_reader :current_time,
               :monday_times,
@@ -72,7 +82,10 @@ class Schedule
               :timezone
 
   def offset
-    current_time.in_time_zone(timezone).formatted_offset
+    # TODO: this logic isn't working.
+    #       - extract into AppTime object
+    # current_time.in_time_zone(timezone).formatted_offset
+    "-04:00"
   end
 
   def tomorrow

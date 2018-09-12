@@ -8,6 +8,35 @@ class Shift
     @end_time = end_time
   end
 
+  def total_minutes
+    ((end_time.to_i - start_time.to_i) / 60).floor
+  end
+
+  def intersect_each(others)
+    others.map { |other| intersect(other) }
+  end
+
+  def intersect(other)
+    return nil if !within_inclusive?(other)
+    return self if self.within?(other)
+    return other if other.within?(self)
+
+    new_start_time = [start_time, other.start_time].max
+    new_end_time = [end_time, other.end_time].min
+    self.class.new(start_time: new_start_time, end_time: new_end_time)
+  end
+
+  def within_inclusive?(other)
+    within?(other) ||
+      contains?(other.start_time) ||
+      contains?(other.end_time)
+  end
+
+  def within?(outer)
+    start_time >= outer.start_time &&
+      end_time <= outer.end_time
+  end
+
   def ==(other_shift)
     start_time == other_shift.start_time &&
       end_time == other_shift.end_time
