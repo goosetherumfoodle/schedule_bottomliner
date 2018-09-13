@@ -1,6 +1,6 @@
 class AppTime
   def self.current
-    DateTime.now
+    DateTime.now.change(offset: '-0400')
   end
 end
 
