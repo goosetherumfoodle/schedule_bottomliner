@@ -3,10 +3,10 @@ require 'rails_helper'
 RSpec.describe Schedule do
   describe '#shifts_in_period' do
     it "returns the shifts in a given period (inclusive, all shifts for each day in period)" do
-      hash = {"monday"=>[["10:30", "16:00"],
-                         ["16:00", "21:00"]],
-              "tuesday"=>[["10:30", "16:00"],
-                          ["16:00", "17:00"]],
+      hash = {"monday"=>[["10:30", "16:00", "name1"],
+                         ["16:00", "21:00", "name2"]],
+              "tuesday"=>[["10:30", "16:00", "name3"],
+                          ["16:00", "17:00", "name4"]],
               "wednesday"=>[["10:30", "16:00"],
                             ["16:00", "21:00"]],
               "thursday"=>[["10:30", "16:00"],

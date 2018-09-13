@@ -1,6 +1,44 @@
 require 'rails_helper'
 
 RSpec.describe Gap::Finder do
+  describe '#join_small_gaps' do
+    context 'with two small shifts next to eachother' do
+      it 'collapses them' do
+        base_time = '01-01-2018 12:00 -0400'.to_datetime
+        first_shift = Shift.new(start_time: base_time, end_time: base_time.advance(hours: 3))
+        small_shift_1 = Shift.new(start_time: base_time.advance(hours: 3), end_time: base_time.advance(hours: 3, minutes: 30))
+        small_shift_2 = Shift.new(start_time: base_time.advance(hours: 3, minutes: 30), end_time: base_time.advance(hours: 4))
+        last_shift = Shift.new(start_time: base_time.advance(hours: 4), end_time: base_time.advance(hours: 6))
+
+        expected_middle = Shift.new(start_time: base_time.advance(hours: 3), end_time: base_time.advance(hours: 4))
+        expected = [first_shift, expected_middle, last_shift]
+
+        schedule = Schedule.build(hash: {}, current_time: base_time)
+        finder = Gap::Finder.new(current_time: base_time, schedule: schedule)
+        result = finder.join_small_gaps([first_shift, small_shift_1, small_shift_2, last_shift])
+
+        expect(result).to eq(expected)
+      end
+    end
+
+    context 'with a small shift next to a larger shift' do
+      it 'leaves them be' do
+        base_time = '01-01-2018 12:00 -0400'.to_datetime
+        first_shift = Shift.new(start_time: base_time, end_time: base_time.advance(hours: 3))
+        small_shift = Shift.new(start_time: base_time.advance(hours: 3), end_time: base_time.advance(hours: 3, minutes: 30))
+        last_shift = Shift.new(start_time: base_time.advance(hours: 4), end_time: base_time.advance(hours: 6))
+
+        expected = [first_shift, small_shift, last_shift]
+
+        schedule = Schedule.build(hash: {}, current_time: base_time)
+        finder = Gap::Finder.new(current_time: base_time, schedule: schedule)
+        result = finder.join_small_gaps([first_shift, small_shift, last_shift])
+
+        expect(result).to match_array(expected)
+      end
+    end
+  end
+
   describe '#gaps_within_period' do
     it 'finds opening gap' do
       current_time = "01-01-2018 18:00 -0400".to_datetime
@@ -218,15 +256,18 @@ RSpec.describe Gap::Finder do
 
           Shift.new(start_time: '02-01-2018 15:00 -0400'.to_datetime,
                     end_time: '02-01-2018 16:00 -0400'.to_datetime),
+
           Shift.new(start_time: '02-01-2018 16:00 -0400'.to_datetime,
                     end_time: '02-01-2018 17:00 -0400'.to_datetime),
+
           Shift.new(start_time: '03-01-2018 10:30 -0400'.to_datetime,
                     end_time: '03-01-2018 16:00 -0400'.to_datetime),
+
           Shift.new(start_time: '03-01-2018 16:00 -0400'.to_datetime,
                     end_time: '03-01-2018 21:00 -0400'.to_datetime)
         ]
 
-        expect(openings).to match_array(expected_openings)
+        expect(openings).to eq(expected_openings)
       end
     end
   end

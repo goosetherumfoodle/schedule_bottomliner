@@ -24,7 +24,6 @@ class CalApi
         description: "Created by bot. Complain to Jesse if there's a problem",
         start: {
           date_time: shift.start_time.to_s
-          # time_zone: 'America/Los_Angeles',
         },
         end: {
           date_time: shift.end_time.to_s
@@ -32,7 +31,11 @@ class CalApi
       )
 
       result = service.insert_event(STAFFING_CAL_ID, event)
-      return {success: "Shift posted: #{shift}"}
+
+      start_time = result.start.date_time
+      end_time = result.end.date_time
+      shift = Shift.new(start_time: start_time, end_time: end_time)
+      return {success: "Shift posted: #{shift.full_name}"}
     end
   end
 

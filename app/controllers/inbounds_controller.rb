@@ -27,7 +27,7 @@ class InboundsController < ApplicationController
       end
 
       responses = openings.each_with_index.reduce({}) do |hash, (shift, i)|
-        hash.merge({i.to_s.to_sym => {action: :take_shift,
+        hash.merge({(i + 1).to_s.to_sym => {action: :take_shift,
                                       payload: {start_time: shift.start_time.to_s,
                                                 end_time: shift.end_time.to_s
                                                }
@@ -38,7 +38,7 @@ class InboundsController < ApplicationController
         full_message = "No open shifts found in the coming week!"
       else
         base_message = openings.map.with_index do |shift, i|
-          "#{i}: #{shift}"
+          "#{i + 1}: #{shift}"
         end.join("\n")
         full_message = ["Open shifts this week.\nRespond with the number to take it.",
                         base_message].join("\n")

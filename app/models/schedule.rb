@@ -70,6 +70,18 @@ class Schedule
     end
   end
 
+  def shifts_and_names_for_day(day)
+    times_for(day).map do |start_end_name|
+      {shift: Shift.new(start_time: day.change(hour: hours(start_time(start_end_name)),
+                                       min: minutes(start_time(start_end_name)),
+                                       offset: offset), # TODO: if this is giving me the current day offset, it should mess up the next day's time (on the day before DST)
+                end_time: day.change(hour: hours(end_time(start_end_name)),
+                                     min: minutes(end_time(start_end_name)),
+                                     offset: offset)),
+       name: name(start_end_name)}
+    end
+  end
+
   private
   attr_reader :current_time,
               :monday_times,
@@ -133,7 +145,11 @@ class Schedule
   end
 
   def end_time(shift)
-    shift.last
+    shift.second
+  end
+
+  def name(shift)
+    shift[2]
   end
 
   def times_for(day)

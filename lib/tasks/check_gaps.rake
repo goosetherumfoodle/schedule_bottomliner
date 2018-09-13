@@ -5,7 +5,7 @@ namespace :gaps do
     File.open('./schedule.yml') do |schedule_file|
       now = DateTime.now
       return nil unless now.tuesday?
-      week_from_now = now.advance(weeks: 1)
+      week_from_now = now.advance(weeks: 1).end_of_day
       this_week = Shift.new(start_time: now,
                             end_time: week_from_now)
 
@@ -14,8 +14,12 @@ namespace :gaps do
 
       taken_shifts = CalApi.new.shifts_for_period(this_week)
 
-      gap_shifts = Gap::Finder.new(current_time: now, schedule: schedule).
-                     call(look_in: this_week, calendar_shifts: taken_shifts)
+      raw_gap_shifts = Gap::Finder.new(current_time: now, schedule: schedule).
+                         call(look_in: this_week, calendar_shifts: taken_shifts)
+
+      namer = Shifts::Names.new(schedule)
+
+      gap_shifts = raw_gap_shifts.map { |shift| namer.call(shift) }
 
       Rails.logger.info "Weekly notification: shift gaps found: #{gap_shifts}"
       Notifier.new(Contact.pluck(:number)).weekly_notification(gap_shifts)
@@ -27,7 +31,7 @@ namespace :gaps do
     Rails.logger.info 'gaps:weekly_notify task started'
     File.open('./schedule.yml') do |schedule_file|
       now = DateTime.now
-      week_from_now = now.advance(weeks: 1)
+      week_from_now = now.advance(weeks: 1).end_of_day
       this_week = Shift.new(start_time: now,
                             end_time: week_from_now)
 
@@ -36,11 +40,15 @@ namespace :gaps do
 
       taken_shifts = CalApi.new.shifts_for_period(this_week)
 
-      gap_shifts = Gap::Finder.new(current_time: now, schedule: schedule).
-                     call(look_in: this_week, calendar_shifts: taken_shifts)
+      raw_gap_shifts = Gap::Finder.new(current_time: now, schedule: schedule).
+                         call(look_in: this_week, calendar_shifts: taken_shifts)
+
+      namer = Shifts::Names.new(schedule)
+
+      gap_shifts = raw_gap_shifts.map { |shift| namer.call(shift) }
 
       Rails.logger.info "Weekly notification: shift gaps found: #{gap_shifts}"
-      Notifier.new(Contact.testers.pluck(:number)).weekly_notification(gap_shifts)
+      Notifier.new(Contact.testers.pluck(:number), test: true).weekly_notification(gap_shifts)
     end
   end
 

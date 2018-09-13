@@ -11,10 +11,45 @@ module Gap
 
     def call(look_in:, calendar_shifts:)
       schedule_shifts = schedule.shifts_in_period(look_in)
-      gaps_within_period(look_in, calendar_shifts).
-        flat_map { |raw_gap| raw_gap.intersect_each(schedule_shifts) }.
-        compact.
-        select { |shift| shift.total_minutes > 10 }
+      raw_gaps = gaps_within_period(look_in, calendar_shifts).
+                   flat_map { |raw_gap| raw_gap.intersect_each(schedule_shifts) }.
+                   compact.
+                   select { |shift| shift.total_minutes > 10 }
+
+      join_small_gaps(raw_gaps)
+    end
+
+    def join_small_gaps(raw_gaps)
+      init = {gaps: [], small_gap: nil}
+
+      reduced = raw_gaps.reduce(init) do |hash, gap|
+        if hash[:small_gap]
+          if gap.total_minutes <= 90
+            # previous gap was small, and the current gap is small
+            joined_gap = hash[:small_gap].join(gap)
+            {gaps: hash[:gaps].append(joined_gap),
+             small_gap: nil}
+          else # previous gap was small, but the current isn't
+            {gaps: hash[:gaps].append(hash[:small_gap]).append(gap),
+             small_gap: nil}
+          end
+        else
+          if gap.total_minutes <= 60
+            # previous gap wasn't small, but current gap is
+            {gaps: hash[:gaps],
+             small_gap: gap}
+          else # neither current nor previous gap are small
+            {gaps: hash[:gaps].append(gap),
+             small_gap: nil}
+          end
+        end
+      end
+
+      if reduced[:small_gap]
+        reduced[:gaps].append[:small_gap]
+      else
+        reduced[:gaps]
+      end
     end
 
     def gaps_within_period(period, shifts)
