@@ -13,7 +13,7 @@ class InboundsController < ApplicationController
     if /shifts/i =~ params['Body']
       ## Showing shifts that can be taken
       now = AppTime.current
-      week_from_now = now.advance(weeks: 1)
+      week_from_now = now.advance(weeks: 1).end_of_day
       this_week = Shift.new(start_time: now,
                             end_time: week_from_now)
       taken_shifts = CalApi.new.shifts_for_period(this_week)

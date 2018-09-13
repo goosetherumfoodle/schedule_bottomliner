@@ -14,7 +14,7 @@ namespace :gaps do
       end
 
       this_week = Shift.new(start_time: now,
-                            end_time: next_wed)
+                            end_time: next_wed.end_of_day)
 
       schedule_hash = YAML.load(schedule_file.read)
       schedule = Schedule.build(hash: schedule_hash, current_time: now)
@@ -48,7 +48,7 @@ namespace :gaps do
       end
 
       this_week = Shift.new(start_time: now,
-                            end_time: next_wed)
+                            end_time: next_wed.end_of_day)
 
       schedule_hash = YAML.load(schedule_file.read)
       schedule = Schedule.build(hash: schedule_hash, current_time: now)
