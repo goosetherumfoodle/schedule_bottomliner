@@ -34,7 +34,7 @@ module Gap
              small_gap: nil}
           end
         else
-          if gap.total_minutes <= 60
+          if gap.total_minutes <= 90
             # previous gap wasn't small, but current gap is
             {gaps: hash[:gaps],
              small_gap: gap}
