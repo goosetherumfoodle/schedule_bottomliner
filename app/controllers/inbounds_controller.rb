@@ -28,10 +28,10 @@ class InboundsController < ApplicationController
 
       responses = openings.each_with_index.reduce({}) do |hash, (shift, i)|
         hash.merge({(i + 1).to_s.to_sym => {action: :take_shift,
-                                      payload: {start_time: shift.start_time.to_s,
-                                                end_time: shift.end_time.to_s
-                                               }
-                                     }})
+                                            payload: {start_time: shift.start_time.to_s,
+                                                      end_time: shift.end_time.to_s
+                                                     }
+                                           }})
       end
 
       if openings.empty?
@@ -49,6 +49,15 @@ class InboundsController < ApplicationController
       end
 
       cookies['responses'] = responses.to_json
+
+      LogEvent.create(description: 'InboundsController#create',
+                      data: {request: {params: params,
+                                       body: params['Body'],
+                                       from: params['From']},
+                             response: {message: full_message,
+                                        cookies: responses}
+                            }
+                     )
 
       render xml: twiml.to_s
     else
@@ -70,29 +79,70 @@ class InboundsController < ApplicationController
             twiml = Twilio::TwiML::MessagingResponse.new do |r|
               r.message(body: message)
             end
+            LogEvent.create(description: 'InboundsController#create',
+                            data: {request: {params: params,
+                                             cookies: session,
+                                             body: params['Body'],
+                                             from: params['From']},
+                                   response: {message: message,
+                                              cookies: responses}
+                                  }
+                           )
+
           else
             message = result[:error].concat("\nReply with \"shifts\" to see updated list.")
             twiml = Twilio::TwiML::MessagingResponse.new do |r|
               r.message(body: message)
             end
+
+            LogEvent.create(description: 'InboundsController#create',
+                            data: {request: {params: params,
+                                             cookies: session,
+                                             body: params['Body'],
+                                             from: params['From']},
+                                   response: {message: message}
+                                  }
+                           )
+
           end
 
           cookies.delete('responses')
+
+
           render xml: twiml.to_s
         else
           message = 'Sorry, unsure what to do with this. Let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
           twiml = Twilio::TwiML::MessagingResponse.new do |r|
             r.message(body: message)
           end
+
+          LogEvent.create(description: 'InboundsController#create',
+                          data: {request: {params: params,
+                                           cookies: session,
+                                           body: params['Body'],
+                                           from: params['From']},
+                                 response: {message: message}
+                                }
+                         )
+
           cookies.delete('responses')
           render xml: twiml.to_s
         end
       else
-        cookies.delete('responses')
         message = 'Sorry, unsure what to do with this. Let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
         twiml = Twilio::TwiML::MessagingResponse.new do |r|
           r.message(body: message)
         end
+
+        LogEvent.create(description: 'InboundsController#create',
+                        data: {request: {params: params,
+                                         cookies: session,
+                                         body: params['Body'],
+                                         from: params['From']},
+                               response: {message: message}
+                              }
+                       )
+
         cookies.delete('responses')
         render xml: twiml.to_s
       end
