@@ -46,7 +46,7 @@ module Gap
       end
 
       if reduced[:small_gap]
-        reduced[:gaps].append[:small_gap]
+        reduced[:gaps].append(reduced[:small_gap])
       else
         reduced[:gaps]
       end

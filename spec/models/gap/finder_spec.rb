@@ -37,6 +37,62 @@ RSpec.describe Gap::Finder do
         expect(result).to match_array(expected)
       end
     end
+
+    context 'regression' do
+      it do
+      base_time = '19-09-2018 15:00 -0400'.to_datetime
+      gaps = [Shift.new(
+                end_time: 'Wed, 19 Sep 2018 16:00:00 -0400'.to_datetime,
+                start_time: 'Wed, 19 Sep 2018 10:30:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Wed, 19 Sep 2018 21:00:00 -0400'.to_datetime,
+                start_time: 'Wed, 19 Sep 2018 16:00:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Thu, 20 Sep 2018 16:00:00 -0400'.to_datetime,
+                start_time: 'Thu, 20 Sep 2018 13:00:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Sat, 22 Sep 2018 16:00:00 -0400'.to_datetime,
+                start_time: 'Sat, 22 Sep 2018 10:30:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Sat, 22 Sep 2018 19:00:00 -0400'.to_datetime,
+                start_time: 'Sat, 22 Sep 2018 16:00:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Sun, 23 Sep 2018 16:00:00 -0400'.to_datetime,
+                start_time: 'Sun, 23 Sep 2018 10:30:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Sun, 23 Sep 2018 19:00:00 -0400'.to_datetime,
+                start_time: 'Sun, 23 Sep 2018 16:00:00 -0400'.to_datetime),
+
+
+              Shift.new(
+                end_time: 'Mon, 24 Sep 2018 16:00:00 -0400'.to_datetime,
+                start_time: 'Mon, 24 Sep 2018 10:30:00 -0400'.to_datetime,
+              ),
+
+              Shift.new(
+                end_time: 'Mon, 24 Sep 2018 17:30:00 -0400'.to_datetime,
+                start_time: 'Mon, 24 Sep 2018 16:00:00 -0400'.to_datetime,
+              )]
+
+
+      schedule = Schedule.build(hash: {}, current_time: base_time)
+      finder = Gap::Finder.new(current_time: base_time, schedule: schedule)
+
+      expect{finder.join_small_gaps(gaps)}.to_not raise_error
+      end
+    end
   end
 
   describe '#gaps_within_period' do
@@ -268,6 +324,30 @@ RSpec.describe Gap::Finder do
         ]
 
         expect(openings).to eq(expected_openings)
+      end
+    end
+  end
+
+  describe 'with empty cal shifts' do
+    it 'doesn\'t fail' do
+      # reference_shifts = [Shift.new(start_time: '12-8-2018 10:30 -0400'.to_datetime,
+      #                               end_time: '12-08-2018 15:00 -0400'.to_datetime),
+      #                     Shift.new(start_time: '12-08-2018 15:00 -0400'.to_datetime,
+      #                               end_time: '12-08-2018 21:30 -0400'.to_datetime)]
+      File.open('./schedule.yml') do |schedule_file|
+        current_time = '11-08-2018 10:30 -0400'.to_datetime # todo: why doesn't this matter?
+        schedule_hash = YAML.load(schedule_file.read)
+        # schedule = double(:schedule, next_shifts: reference_shifts)
+        schedule = Schedule.build(hash: schedule_hash, current_time: current_time)
+
+        full_next_day = Shift.new(start_time: current_time.advance(days: 1).to_datetime,
+                                  end_time: current_time.advance(days: 2).to_datetime)
+
+        result = Gap::Finder.new(current_time: current_time,
+                                 schedule: schedule).call(look_in: full_next_day,
+                                                          calendar_shifts: [])
+
+        expect(result).to eq(nil)
       end
     end
   end
