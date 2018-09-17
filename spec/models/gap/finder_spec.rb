@@ -38,59 +38,23 @@ RSpec.describe Gap::Finder do
       end
     end
 
-    context 'regression' do
-      it do
-      base_time = '19-09-2018 15:00 -0400'.to_datetime
-      gaps = [Shift.new(
-                end_time: 'Wed, 19 Sep 2018 16:00:00 -0400'.to_datetime,
-                start_time: 'Wed, 19 Sep 2018 10:30:00 -0400'.to_datetime),
+    context 'with a trailing small shift' do
+      it "doens't lose it" do
+        base_time = '01-01-2018 12:00 -0400'.to_datetime
+        first_shift = Shift.new(start_time: base_time, end_time: base_time.advance(hours: 3))
+        small_shift_1 = Shift.new(start_time: base_time.advance(hours: 3), end_time: base_time.advance(hours: 3, minutes: 30))
+        last_shift = Shift.new(start_time: base_time.advance(hours: 4), end_time: base_time.advance(hours: 6))
+        small_shift_2 = Shift.new(start_time: base_time.advance(hours: 3, minutes: 30), end_time: base_time.advance(hours: 4))
 
 
-              Shift.new(
-                end_time: 'Wed, 19 Sep 2018 21:00:00 -0400'.to_datetime,
-                start_time: 'Wed, 19 Sep 2018 16:00:00 -0400'.to_datetime),
+        expected_middle = Shift.new(start_time: base_time.advance(hours: 3), end_time: base_time.advance(hours: 4))
+        expected = [first_shift, small_shift_1, last_shift, small_shift_2]
 
+        schedule = Schedule.build(hash: {}, current_time: base_time)
+        finder = Gap::Finder.new(current_time: base_time, schedule: schedule)
+        result = finder.join_small_gaps([first_shift, small_shift_1, last_shift, small_shift_2])
 
-              Shift.new(
-                end_time: 'Thu, 20 Sep 2018 16:00:00 -0400'.to_datetime,
-                start_time: 'Thu, 20 Sep 2018 13:00:00 -0400'.to_datetime),
-
-
-              Shift.new(
-                end_time: 'Sat, 22 Sep 2018 16:00:00 -0400'.to_datetime,
-                start_time: 'Sat, 22 Sep 2018 10:30:00 -0400'.to_datetime),
-
-
-              Shift.new(
-                end_time: 'Sat, 22 Sep 2018 19:00:00 -0400'.to_datetime,
-                start_time: 'Sat, 22 Sep 2018 16:00:00 -0400'.to_datetime),
-
-
-              Shift.new(
-                end_time: 'Sun, 23 Sep 2018 16:00:00 -0400'.to_datetime,
-                start_time: 'Sun, 23 Sep 2018 10:30:00 -0400'.to_datetime),
-
-
-              Shift.new(
-                end_time: 'Sun, 23 Sep 2018 19:00:00 -0400'.to_datetime,
-                start_time: 'Sun, 23 Sep 2018 16:00:00 -0400'.to_datetime),
-
-
-              Shift.new(
-                end_time: 'Mon, 24 Sep 2018 16:00:00 -0400'.to_datetime,
-                start_time: 'Mon, 24 Sep 2018 10:30:00 -0400'.to_datetime,
-              ),
-
-              Shift.new(
-                end_time: 'Mon, 24 Sep 2018 17:30:00 -0400'.to_datetime,
-                start_time: 'Mon, 24 Sep 2018 16:00:00 -0400'.to_datetime,
-              )]
-
-
-      schedule = Schedule.build(hash: {}, current_time: base_time)
-      finder = Gap::Finder.new(current_time: base_time, schedule: schedule)
-
-      expect{finder.join_small_gaps(gaps)}.to_not raise_error
+        expect(result).to eq(expected)
       end
     end
   end
