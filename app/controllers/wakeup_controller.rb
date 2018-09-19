@@ -1,5 +1,5 @@
 class WakeupController < ApplicationController
-  def create
+  def show
     render plain: "Ok! I'm up!"
   end
 end
