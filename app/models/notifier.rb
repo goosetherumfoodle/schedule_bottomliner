@@ -4,6 +4,10 @@ class Notifier
     @test = test
   end
 
+  def arbitrary(msg)
+    twilio_api.text_all(msg)
+  end
+
   def gap_shifts(shifts)
     twilio_api.text_all("#{'Gap'.pluralize(shifts.count)} tomorrow:\n#{shifts.join("\n")}\nTo volunteer for a shift right now, respond \"shifts\"")
   end

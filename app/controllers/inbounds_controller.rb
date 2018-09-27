@@ -73,6 +73,25 @@ class InboundsController < ApplicationController
                                   }
                            )
       render xml: twiml.to_s
+    elsif  /commands/i =~ params['Body']
+      contact = Contact.unscoped.find_by!(number: params['From'])
+
+      message = "Available commands:\nshifts: show a list of open shifts that you can then claim by responded with the corresponding number.\nsuspend: silence any incoming notifications for the current week of shifts"
+
+      twiml = Twilio::TwiML::MessagingResponse.new do |r|
+        r.message(body: message)
+      end
+
+      LogEvent.create(description: 'InboundsController#create',
+                            data: {request: {params: params,
+                                             cookies: session,
+                                             body: params['Body'],
+                                             from: params['From']},
+                                   response: {message: message}
+                                  }
+                           )
+      render xml: twiml.to_s
+
     else
       if request.cookies['responses']
         body = params['Body'].strip
@@ -124,7 +143,7 @@ class InboundsController < ApplicationController
 
           render xml: twiml.to_s
         else
-          message = 'Sorry, unsure what to do with this. Let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
+          message = 'Sorry, unsure what to do with this. If you want to see a list of commands respond "commands". If this is a problem, let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
           twiml = Twilio::TwiML::MessagingResponse.new do |r|
             r.message(body: message)
           end
@@ -142,7 +161,7 @@ class InboundsController < ApplicationController
           render xml: twiml.to_s
         end
       else
-        message = 'Sorry, unsure what to do with this. Let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
+        message = 'Sorry, unsure what to do with this. If you want to see a list of commands respond "commands". If this is a problem, let Jesse know how you got this message. (If you can figure out the steps to reproduce it, that would help)'
         twiml = Twilio::TwiML::MessagingResponse.new do |r|
           r.message(body: message)
         end

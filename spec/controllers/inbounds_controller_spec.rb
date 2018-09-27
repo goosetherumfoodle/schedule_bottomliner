@@ -2,6 +2,43 @@ require 'rails_helper'
 
 RSpec.describe InboundsController, type: :controller do
   describe '#create' do
+    describe 'getting help text' do
+      it 'shows possible commands' do
+        friday = AppTime.new("22-6-2018 18:00 -0400".to_datetime).now
+        eod_tuesday = AppTime.new("26-6-2018 18:00 -0400".to_datetime).now.end_of_day
+        current_week = Shift.new(start_time: friday, end_time: eod_tuesday)
+        app_time = double(:app_time, asUTC: friday.new_offset(0), current_week: current_week)
+        allow(AppTime).to receive(:new).and_return(app_time)
+
+        contact = Contact.create! name: 'username', number: "+15555555555"
+        command = 'Commands'
+
+        post :create, params: {"ToCountry"=>"US",
+                               "ToState"=>"NY",
+                               "SmsMessageSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "NumMedia"=>"0",
+                               "ToCity"=>"DIAMOND POINT",
+                               "FromZip"=>"12804",
+                               "SmsSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "FromState"=>"NY",
+                               "SmsStatus"=>"received",
+                               "FromCity"=>"GLENS FALLS",
+                               "Body"=>" #{command}",
+                               "FromCountry"=>"US",
+                               "To"=>"+15182409424",
+                               "ToZip"=>"12885",
+                               "NumSegments"=>"1",
+                               "MessageSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "AccountSid"=>"AC217eb0e1351b8b23149dd61f71b70dc0",
+                               "From"=> contact.number,
+                               "ApiVersion"=>"2010-04-01",
+                               "controller"=>"inbounds",
+                               "action"=>"create"}
+
+        expect(response.body).to eq("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n<Message>Available commands:\nshifts: show a list of open shifts that you can then claim by responded with the corresponding number.\nsuspend: silence any incoming notifications for the current week of shifts</Message>\n</Response>\n")
+      end
+    end
+
     describe 'suspending account' do
       it 'marks user as suspended for current biz week' do
         friday = AppTime.new("22-6-2018 18:00 -0400".to_datetime).now
@@ -147,11 +184,11 @@ RSpec.describe InboundsController, type: :controller do
           expected_body = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n<Message>0: Mon 1st, 06:00 PM - 09:00 PM\n1:...:00 PM\n11: Mon 8th, 10:30 AM - 04:00 PM\n12: Mon 8th, 04:00 PM - 06:00 PM</Message>\n</Response>\n"
 
           expected_cookie = {"0"=>{"action"=>"take_shift",
-                                               "payload"=>{"start_time"=>"2018-01-01T18:00:00-04:00", "end_time"=>shift_1.end_time.to_s}},
-                                         "1"=> {"action"=>"take_shift",
-                                         "payload"=>{"start_time"=>"2018-01-08T16:00:00-04:00", "end_time"=>"2018-01-08T18:00:00-04:00"}}}
+                                   "payload"=>{"start_time"=>"2018-01-01T18:00:00-04:00", "end_time"=>shift_1.end_time.to_s}},
+                             "1"=> {"action"=>"take_shift",
+                                    "payload"=>{"start_time"=>"2018-01-08T16:00:00-04:00", "end_time"=>"2018-01-08T18:00:00-04:00"}}}
 
-#          expect(response.body).to eq(expected_body)
+          expect(response.body).to eq(expected_body)
           expect(JSON.parse(response.cookies['responses'])).to eq(expected_cookie)
         end
       end
