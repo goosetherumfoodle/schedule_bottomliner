@@ -1,9 +1,3 @@
-class AppTime
-  def self.current
-    DateTime.now.change(offset: '-0400')
-  end
-end
-
 class InboundsController < ApplicationController
   include ActionController::Cookies
 

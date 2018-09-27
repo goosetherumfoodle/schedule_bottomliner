@@ -40,9 +40,7 @@ class CalApi
   end
 
   def shifts_for_period(period)
-    # Fetch the next 10 events for the user
-    calendar_id = STAFFING_CAL_ID
-    response = service.list_events(calendar_id,
+    response = service.list_events(STAFFING_CAL_ID,
                                    single_events: true,
                                    order_by: 'startTime',
                                    time_min: period.start_time.iso8601,
@@ -54,6 +52,24 @@ class CalApi
       start = event.start.date || event.start.date_time
       Shift.new(start_time: event.start.date_time,
                 end_time: event.end.date_time)
+    end
+  end
+
+  def shifts_with_summaries_for_period(period)
+    response = service.list_events(STAFFING_CAL_ID,
+                                   single_events: true,
+                                   order_by: 'startTime',
+                                   time_min: period.start_time.iso8601,
+                                   time_max: period.end_time.iso8601)
+
+    response_shifts = response.items
+
+    response_shifts.map do |event|
+      start = event.start.date || event.start.date_time
+
+      {shift: Shift.new(start_time: event.start.date_time,
+                        end_time: event.end.date_time),
+       summary: event&.summary}
     end
   end
 
