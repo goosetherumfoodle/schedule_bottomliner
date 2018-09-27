@@ -1,10 +1,20 @@
 class AppTime
-  def initialize(now)
-    @now = now || DateTime.now
+  def initialize(now = DateTime.now)
+    @now = now
+  end
+
+  # TODO: change to represent time internally as UTC
+
+  def self.fromUTC(time)
+    new(time.new_offset('-0400'))
   end
 
   def self.current
     now
+  end
+
+  def asUTC
+    now.new_offset(0)
   end
 
   def is_tuesday?
@@ -23,11 +33,11 @@ class AppTime
     Shift.new(start_time: start_time, end_time: end_time)
   end
 
-  private
-
   def now
-    @offset_now ||= @now.change(offset: '-0400')
+    @offset_now ||= @now.new_offset('-0400')
   end
+
+  private
 
   def last_tuesday
     tue_wday = 2

@@ -2,6 +2,46 @@ require 'rails_helper'
 
 RSpec.describe InboundsController, type: :controller do
   describe '#create' do
+    describe 'suspending account' do
+      it 'marks user as suspended for current biz week' do
+        friday = AppTime.new("22-6-2018 18:00 -0400".to_datetime).now
+        eod_tuesday = AppTime.new("26-6-2018 18:00 -0400".to_datetime).now.end_of_day
+        current_week = Shift.new(start_time: friday, end_time: eod_tuesday)
+        app_time = double(:app_time, asUTC: friday.new_offset(0), current_week: current_week)
+        allow(AppTime).to receive(:new).and_return(app_time)
+
+        contact = Contact.create! name: 'username', number: "+15555555555"
+        command = 'Suspend'
+
+        post :create, params: {"ToCountry"=>"US",
+                               "ToState"=>"NY",
+                               "SmsMessageSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "NumMedia"=>"0",
+                               "ToCity"=>"DIAMOND POINT",
+                               "FromZip"=>"12804",
+                               "SmsSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "FromState"=>"NY",
+                               "SmsStatus"=>"received",
+                               "FromCity"=>"GLENS FALLS",
+                               "Body"=>" #{command}",
+                               "FromCountry"=>"US",
+                               "To"=>"+15182409424",
+                               "ToZip"=>"12885",
+                               "NumSegments"=>"1",
+                               "MessageSid"=>"SMd5846f78d436d20fd6a37b7432b9d606",
+                               "AccountSid"=>"AC217eb0e1351b8b23149dd61f71b70dc0",
+                               "From"=> contact.number,
+                               "ApiVersion"=>"2010-04-01",
+                               "controller"=>"inbounds",
+                               "action"=>"create"}
+
+        suspension_result = contact.reload.suspended_until.to_datetime.to_i
+        expected_suspension = eod_tuesday.new_offset(0).to_i
+
+        expect(suspension_result).to eq(expected_suspension)
+      end
+    end
+
     describe 'requesting a shift' do
       it 'sends the shift to the gcal api' do
         current_time = "01-01-2018 17:00".to_datetime

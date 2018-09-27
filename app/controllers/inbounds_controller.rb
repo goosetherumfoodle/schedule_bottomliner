@@ -1,12 +1,11 @@
 class InboundsController < ApplicationController
   include ActionController::Cookies
 
-  # TODO: extract an AppTime object
   # TODO: fix logic (cookies or commands have precedence?)
   def create
     if /shifts/i =~ params['Body']
       ## Showing shifts that can be taken
-      now = AppTime.current
+      now = AppTime.new.now
       week_from_now = now.advance(weeks: 1).end_of_day
       this_week = Shift.new(start_time: now,
                             end_time: week_from_now)
@@ -53,6 +52,26 @@ class InboundsController < ApplicationController
                             }
                      )
 
+      render xml: twiml.to_s
+
+    elsif  /suspend/i =~ params['Body']
+      contact = Contact.find_by!(number: params['From'])
+      contact.suspend_this_week!
+
+      message = "I'll leave you alone until the next store-week starts"
+
+      twiml = Twilio::TwiML::MessagingResponse.new do |r|
+        r.message(body: message)
+      end
+
+      LogEvent.create(description: 'InboundsController#create',
+                            data: {request: {params: params,
+                                             cookies: session,
+                                             body: params['Body'],
+                                             from: params['From']},
+                                   response: {message: message}
+                                  }
+                           )
       render xml: twiml.to_s
     else
       if request.cookies['responses']

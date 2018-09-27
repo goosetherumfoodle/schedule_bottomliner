@@ -2,6 +2,8 @@ module Gap
   class Finder
     ACCEPTABLE_GAP_MINUTES = 40
 
+    ## TODO: test that gaps are found if there's no scheduled shifts
+
     def initialize(current_time:, schedule:)
       # todo: remove current_time?
       @schedule = schedule

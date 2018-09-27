@@ -28,9 +28,9 @@ namespace :gaps do
       gap_shifts = raw_gap_shifts.map { |shift| namer.call(shift) }
 
       has_gaps = !gap_shifts.empty?
+      contact_msgs = PersonalNotification.new.call(contacts: Contact.testers, scheduled: scheduled_names, openings: has_gaps)
 
-      if has_gaps
-        contact_msgs = PersonalNotification.new.call(contacts: Contact.testers, scheduled: scheduled_names, openings: true)
+      if contact_msgs
         contact_msgs.each do |contact_msg|
           contact_msg[:message] = contact_msg[:message].
                                     concat("\n").
@@ -72,9 +72,9 @@ namespace :gaps do
       gap_shifts = raw_gap_shifts.map { |shift| namer.call(shift) }
 
       has_gaps = !gap_shifts.empty?
+      contact_msgs = PersonalNotification.new.call(contacts: Contact.testers, scheduled: scheduled_names, openings: has_gaps)
 
-      if has_gaps
-        contact_msgs = PersonalNotification.new.call(contacts: Contact.all, scheduled: scheduled_names, openings: true)
+      if contact_msgs
         contact_msgs.each do |contact_msg|
           contact_msg[:message] = contact_msg[:message].
                                     concat("\n").
