@@ -1,6 +1,6 @@
 module Gap
   class Finder
-    ACCEPTABLE_GAP_MINUTES = 40
+    ACCEPTABLE_GAP_MINUTES = 65
 
     ## TODO: test that gaps are found if there's no scheduled shifts
 
@@ -16,9 +16,13 @@ module Gap
       raw_gaps = gaps_within_period(look_in, calendar_shifts).
                    flat_map { |raw_gap| raw_gap.intersect_each(schedule_shifts) }.
                    compact.
-                   select { |shift| shift.total_minutes > 10 }
+                   select { |shift| shift.total_minutes > ACCEPTABLE_GAP_MINUTES }
 
-      join_small_gaps(raw_gaps)
+      # TODO: Fix this
+      # x = join_small_gaps(raw_gaps).
+      #   select { |shift| shift.total_minutes > ACCEPTABLE_GAP_MINUTES }
+      # binding.pry
+      # x
     end
 
     def join_small_gaps(raw_gaps)
